@@ -1,0 +1,34 @@
+import { Routes, Route, NavLink } from "react-router-dom";
+import StudentPage from "./pages/StudentPage";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import SetupPage from "./pages/SetupPage";
+
+export default function App() {
+  return (
+    <div className="app">
+      <header className="topbar">
+        <NavLink to="/" className="brand">
+          <span className="brand-mark">📞</span> Storyline
+        </NavLink>
+        <nav className="nav">
+          <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
+            Student
+          </NavLink>
+          <NavLink to="/teacher" className={({ isActive }) => (isActive ? "active" : "")}>
+            Teacher
+          </NavLink>
+          <NavLink to="/setup" className={({ isActive }) => (isActive ? "active" : "")}>
+            Setup
+          </NavLink>
+        </nav>
+      </header>
+      <main className="main">
+        <Routes>
+          <Route path="/" element={<StudentPage />} />
+          <Route path="/teacher" element={<TeacherDashboard />} />
+          <Route path="/setup" element={<SetupPage />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}

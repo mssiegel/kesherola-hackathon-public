@@ -1,0 +1,97 @@
+import { useEffect, useState } from "react";
+import type { Assignment } from "@shared/types";
+import { enroll, getAssignment } from "../lib/api";
+
+type Phase = "form" | "calling" | "ringing" | "error";
+
+export default function StudentPage() {
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phase, setPhase] = useState<Phase>("form");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getAssignment().then(setAssignment).catch(() => {});
+  }, []);
+
+  const character = assignment?.characterName ?? "Your character";
+  const book = assignment?.bookTitle ?? "the book";
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    const cleanPhone = phone.trim().replace(/[\s-]/g, "");
+    if (!name.trim()) return setError("Please enter your name.");
+    if (!/^\+[1-9]\d{1,14}$/.test(cleanPhone))
+      return setError("Enter your number in international format, e.g. +14155551234.");
+
+    setPhase("calling");
+    try {
+      const res = await enroll(name.trim(), cleanPhone);
+      if (res.ok) setPhase("ringing");
+      else {
+        setError(res.detail || "Something went wrong placing the call.");
+        setPhase("error");
+      }
+    } catch (err) {
+      setError((err as Error).message);
+      setPhase("error");
+    }
+  }
+
+  if (phase === "ringing") {
+    return (
+      <div className="card hero center">
+        <div className="big-emoji">📞✨</div>
+        <h1>{character} is calling you now, {name}!</h1>
+        <p className="muted">
+          Answer your phone and have a chat about <em>{book}</em>. Speak naturally —
+          {" "}it's a real conversation. When you're done, just say goodbye and hang up.
+        </p>
+        <button className="btn ghost" onClick={() => { setPhase("form"); setName(""); setPhone(""); }}>
+          Enroll someone else
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card hero">
+      <div className="big-emoji">🦉</div>
+      <h1>{character} wants to talk to you</h1>
+      <p className="lead">
+        about <strong>{book}</strong>. Pop in your name and phone number, and you'll get a
+        real phone call to chat about what you read.
+      </p>
+
+      <form className="form" onSubmit={onSubmit}>
+        <label>
+          Your name
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Moshe"
+            autoComplete="given-name"
+          />
+        </label>
+        <label>
+          Your phone number
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+1 415 555 1234"
+            inputMode="tel"
+          />
+          <span className="hint">International format, starting with “+”.</span>
+        </label>
+
+        {error && <div className="error">{error}</div>}
+
+        <button className="btn primary" type="submit" disabled={phase === "calling"}>
+          {phase === "calling" ? "Calling…" : `Call me as ${character.split(" ")[0]} →`}
+        </button>
+      </form>
+    </div>
+  );
+}
