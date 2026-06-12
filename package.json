@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Kesherola — students get an AI phone call from a literary character; teachers get Claude-assessed transcripts. Built on the Dial Node SDK.",
+  "description": "Kesherola — students get an AI phone call from a literary character; teachers get AI-assessed transcripts. Built on the Dial Node SDK.",
   "scripts": {
     "start": "node --import tsx --env-file-if-exists=.env server.ts",
     "server": "node --import tsx --watch --env-file-if-exists=.env server.ts",
     "web": "npm --prefix web run dev",
-    "dev": "concurrently -n server,web -c blue,magenta \"npm run server\" \"npm run web\"",
+    "predev": "npx kill-port 8000 5173",
+    "dev": "concurrently -n server,web -c blue,magenta \"npm run server\" \"npx wait-on tcp:8000 && npm run web\"",
     "build": "npm --prefix web install && npm --prefix web run build",
     "typecheck": "tsc --noEmit && npm --prefix web run typecheck"
   },
@@ -16,6 +17,7 @@
     "@anthropic-ai/sdk": "^0.104.1",
     "@getdial/sdk": "^0.7.0",
     "express": "^5.2.1",
+    "openai": "^6.42.0",
     "ws": "^8.21.0"
   },
   "devDependencies": {

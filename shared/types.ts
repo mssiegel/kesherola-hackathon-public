@@ -44,11 +44,11 @@ export type SessionStatus =
   | "calling"      // call placed, ringing / in progress
   | "completed"    // call ended normally; transcript may still be pending
   | "transcribed"  // transcript captured; assessment pending
-  | "assessed"     // Claude assessment ready
+  | "assessed"     // AI assessment ready
   | "no-answer"    // nobody picked up
   | "failed";      // busy / failed / canceled
 
-/** Claude's structured grade of one transcript. */
+/** Structured AI grade of one transcript. */
 export interface Assessment {
   summary: string;        // 1–2 sentence overview for the teacher
   understood: string[];   // learning goals the student demonstrated

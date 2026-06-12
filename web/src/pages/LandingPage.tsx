@@ -37,7 +37,7 @@ export default function LandingPage() {
         <h1>Your lesson, as a phone call students actually pick up.</h1>
         <p className="lead">
           Kesherola calls each student as a character — a book's hero, a historical leader, a spy
-          recruiter — and has a real, adaptive conversation. Claude grades the transcript, so you
+          recruiter — and has a real, adaptive conversation. AI grades the transcript, so you
           instantly see who understood the material and who needs help.
         </p>
         <div className="landing-cta">

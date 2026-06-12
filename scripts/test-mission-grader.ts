@@ -3,10 +3,21 @@
 // transcript should come back as a "supported" success. Run:
 //   node --import tsx --env-file-if-exists=.env scripts/test-mission-grader.ts
 
-import { assessTranscript } from "../assessor.ts";
+import { assessTranscript, assessmentEnabled, assessmentProvider } from "../assessor.ts";
 import { getAssignment } from "../assignment.ts";
+import { loadSettings } from "../config.ts";
 
 const assignment = getAssignment(); // seeded Golda mission
+const settings = loadSettings();
+const assessmentConfig = {
+  openaiApiKey: settings.openaiApiKey,
+  anthropicApiKey: settings.anthropicApiKey,
+  model: settings.assessmentModel,
+};
+
+if (!assessmentEnabled(assessmentConfig)) {
+  throw new Error("Set OPENAI_API_KEY or CODEX_API_KEY to test OpenAI grading, or ANTHROPIC_API_KEY to test fallback grading.");
+}
 
 const STRONG = `
 Agent: Shalom. This is Golda Meir. I am told you have urgent information. My advisors believe war is unlikely. Tell me — why do you think Egypt and Syria may attack?
@@ -29,8 +40,10 @@ User: Maybe... have a meeting?
 `;
 
 async function run(label: string, transcript: string) {
-  const a = await assessTranscript(process.env.ANTHROPIC_API_KEY!, assignment, "Maya", transcript);
+  const a = await assessTranscript(assessmentConfig, assignment, "Maya", transcript);
   console.log(`\n===== ${label} =====`);
+  console.log("provider:", assessmentProvider(assessmentConfig));
+  console.log("model:", assessmentConfig.model);
   console.log("outcome:", a.outcome);
   console.log("score:", a.score);
   console.log("suggestedGrade:", a.suggestedGrade);

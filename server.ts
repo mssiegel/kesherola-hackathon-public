@@ -6,8 +6,8 @@
 //   * WS  /ws               live session updates pushed to the teacher dashboard
 //
 // Call lifecycle is driven by Dial events on the DialService hub: call.ended
-// sets the outcome; call.transcribed captures the transcript (and, in Sprint 2,
-// triggers the Claude assessment).
+// sets the outcome; call.transcribed captures the transcript and triggers the
+// AI assessment when a grading provider is configured.
 
 import express from "express";
 import type { Request, Response } from "express";
@@ -19,7 +19,7 @@ import { loadSettings } from "./config.ts";
 import { DialService } from "./dial-service.ts";
 import { getAssignment, saveAssignment, buildOutboundInstruction, SCENARIO_TEMPLATES } from "./assignment.ts";
 import { createSession, getSession, updateSession, listSessions, loadSessions } from "./store.ts";
-import { assessTranscript, assessmentEnabled } from "./assessor.ts";
+import { assessTranscript, assessmentEnabled, assessmentProvider } from "./assessor.ts";
 import type { Assignment, ScenarioMode, Session, SessionStatus } from "./shared/types.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -37,6 +37,11 @@ function requireText(v: string, label: string): string {
 }
 
 const settings = loadSettings();
+const assessmentConfig = {
+  openaiApiKey: settings.openaiApiKey,
+  anthropicApiKey: settings.anthropicApiKey,
+  model: settings.assessmentModel,
+};
 const service = new DialService(settings);
 loadSessions();
 await service.start();
@@ -94,22 +99,23 @@ async function handleEvent(raw: unknown): Promise<void> {
   }
 }
 
-/** Grade a captured transcript with Claude and store the result (if enabled). */
+/** Grade a captured transcript and store the result (if enabled). */
 async function runAssessment(callId: string, transcript: string): Promise<void> {
-  if (!assessmentEnabled(settings.anthropicApiKey) || !transcript.trim()) return;
+  if (!assessmentEnabled(assessmentConfig) || !transcript.trim()) return;
   const session = getSession(callId);
   if (!session) return;
   if (session.isTest) return; // dry-runs capture a transcript but are not graded
   try {
     const assessment = await assessTranscript(
-      settings.anthropicApiKey!,
+      assessmentConfig,
       getAssignment(),
       session.name,
       transcript,
     );
     const updated = updateSession(callId, { status: "assessed", assessment });
     if (updated) publishSession(updated);
-    console.log(`[kesherola] assessed ${callId}: score ${assessment.score} (${assessment.suggestedGrade})`);
+    const provider = assessmentProvider(assessmentConfig);
+    console.log(`[kesherola] assessed ${callId} via ${provider}: score ${assessment.score} (${assessment.suggestedGrade})`);
   } catch (e) {
     console.error(`[kesherola] assessment failed for ${callId}:`, (e as Error).message);
   }
@@ -252,13 +258,13 @@ app.get("/api/sessions/:callId", (req: Request, res: Response) => {
   res.json({ session });
 });
 
-// Re-run (or run) the Claude assessment on a stored transcript on demand.
+// Re-run (or run) the AI assessment on a stored transcript on demand.
 app.post("/api/sessions/:callId/assess", async (req: Request, res: Response) => {
   const callId = String(req.params.callId);
   const session = getSession(callId);
   if (!session) { res.status(404).json({ detail: "Session not found" }); return; }
-  if (!assessmentEnabled(settings.anthropicApiKey)) {
-    res.status(400).json({ detail: "ANTHROPIC_API_KEY is not set — add it to .env to enable grading." }); return;
+  if (!assessmentEnabled(assessmentConfig)) {
+    res.status(400).json({ detail: "OPENAI_API_KEY or CODEX_API_KEY is not set. Add one to .env to enable OpenAI grading, or set ANTHROPIC_API_KEY as a fallback." }); return;
   }
   if (!session.transcript?.trim()) { res.status(400).json({ detail: "No transcript to assess yet." }); return; }
   try {

@@ -1,7 +1,7 @@
 # Storyline — Project Context (for brainstorming)
 
 ## One-liner
-Students receive a **live AI phone call from a character** (a literary character or a historical figure). The AI roleplays in character and has a real spoken conversation that probes whether the student actually did the reading/learning. After the call, **Claude reads the transcript and grades it** against the teacher's goals. It's engaging homework that's hard to fake with an AI, because the student has to *talk* and reason in real time.
+Students receive a **live AI phone call from a character** (a literary character or a historical figure). The AI roleplays in character and has a real spoken conversation that probes whether the student actually did the reading/learning. After the call, **AI reads the transcript and grades it** against the teacher's goals. It's engaging homework that's hard to fake with an AI, because the student has to *talk* and reason in real time.
 
 ## Why it exists
 Traditional homework (essays, worksheets) is now trivially faked with AI. A spoken, adaptive conversation with a character is much harder to fake, more engaging for students, and gives teachers a richer signal than a multiple-choice score. Built at a hackathon (working title "Storyline").
@@ -19,13 +19,13 @@ The genuinely hard pedagogy of a mission (adaptive support tiers, no-fail guaran
 2. Student goes to `/`, enters name + phone number, and self-enrolls.
 3. The system places an **outbound AI voice call**; the AI stays in character and adapts to the student's answers.
 4. The transcript is captured live; the teacher watches sessions, transcripts, and assessments on `/teacher` in real time.
-5. **Claude grades the transcript** against the assignment's rubric and produces a structured assessment.
+5. **AI grades the transcript** against the assignment's rubric and produces a structured assessment.
 
 ## Tech stack
 - **Voice/phone:** [Dial](https://getdial.ai) — gives AI agents real phone numbers and outbound calls (SMS + voice). The app forks Dial's `sms-and-voice/node-express` playbook.
 - **Backend:** Node + TypeScript (Express + WebSocket `/ws` + `@getdial/sdk`, run via `tsx`).
 - **Frontend:** React + TypeScript (Vite). Three routes: `/` (student enroll), `/teacher` (live dashboard), `/setup` (assignment editor).
-- **Assessment:** Anthropic API (`@anthropic-ai/sdk`, `claude-sonnet-4-6`) producing a structured grade.
+- **Assessment:** OpenAI-first structured assessment (`openai`, default `gpt-5.5`) with Anthropic fallback (`@anthropic-ai/sdk`, default `claude-sonnet-4-6`).
 - **Storage:** simple JSON files (`data/assignment.json`, `data/sessions.json`) — hackathon-grade, no DB.
 
 ## Status / what's proven

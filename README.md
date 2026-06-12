@@ -2,11 +2,11 @@
 
 **Your lesson, as a phone call students actually pick up.**
 
-Kesherola calls each student and puts them in a real, spoken conversation with a character — a book's hero, a historical leader, a scientist, a spy recruiter. The student has to *talk*, think on their feet, and reach the goal of the scene. After the call, **Claude reads the transcript and grades it** against the teacher's objectives.
+Kesherola calls each student and puts them in a real, spoken conversation with a character — a book's hero, a historical leader, a scientist, a spy recruiter. The student has to *talk*, think on their feet, and reach the goal of the scene. After the call, **AI reads the transcript and grades it** against the teacher's objectives.
 
 It's homework that's hard to fake with AI (it's a live voice call, not a worksheet), it adapts to each student, and it grades itself.
 
-Built on [Dial](https://getdial.ai) (AI voice calls) + the [Anthropic API](https://console.anthropic.com) (assessment).
+Built on [Dial](https://getdial.ai) (AI voice calls) + OpenAI-first transcript assessment, with optional Anthropic fallback.
 
 ---
 
@@ -54,7 +54,7 @@ Adding a new use case is one config object in [`assignment.ts`](assignment.ts) (
 6. Send students to **`/student`** to enroll (or share the page). Each call rings their phone.
 7. Watch results roll in on **`/teacher`**: transcript + per-objective checklist + outcome + a suggested follow-up question.
 
-> Grading needs an Anthropic key (below). Without it, calls and transcripts still work — only the AI assessment is skipped.
+> Grading needs an OpenAI-compatible key (`OPENAI_API_KEY` or `CODEX_API_KEY`). Without it, calls and transcripts still work — only the AI assessment is skipped. `ANTHROPIC_API_KEY` can be used as a fallback if no OpenAI key is configured.
 
 ---
 
@@ -63,10 +63,10 @@ Adding a new use case is one config object in [`assignment.ts`](assignment.ts) (
 Requires **Node 22+**.
 
 1. **Dial account, number, and API key.** Sign up at [getdial.ai](https://getdial.ai), provision a phone number, and grab your `sk_live_...` key. (CLI: `npm i -g @getdial/cli` then `dial onboard`.)
-2. **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com) (optional — enables grading).
+2. **OpenAI-compatible API key** (optional — enables grading). Use `OPENAI_API_KEY`, or `CODEX_API_KEY` if that is the key name you already have. `ANTHROPIC_API_KEY` is still supported as fallback-only.
 3. **Configure env:**
    ```bash
-   cp .env.example .env       # fill DIAL_API_KEY (required) and ANTHROPIC_API_KEY (optional)
+   cp .env.example .env       # fill DIAL_API_KEY (required) and OPENAI_API_KEY or CODEX_API_KEY (optional)
    ```
 4. **Install and run (dev):**
    ```bash
@@ -85,9 +85,11 @@ Requires **Node 22+**.
 | Var | Required | Purpose |
 |-----|----------|---------|
 | `DIAL_API_KEY` | yes | Place/receive calls via Dial. |
-| `ANTHROPIC_API_KEY` | no | Enables Claude grading of transcripts. |
+| `OPENAI_API_KEY` | no | Preferred key for AI grading of transcripts. |
+| `CODEX_API_KEY` | no | Alias for an OpenAI-compatible key; used when `OPENAI_API_KEY` is not set. |
+| `ANTHROPIC_API_KEY` | no | Fallback grading key used only when no OpenAI key is configured. |
 | `DIAL_NUMBER_ID` | no | Specific sending number; defaults to your first. |
-| `ASSESS_MODEL` | no | Grading model (default `claude-sonnet-4-6`). |
+| `ASSESS_MODEL` | no | Grading model (default `gpt-5.5` with OpenAI, `claude-sonnet-4-6` for Anthropic fallback). |
 | `PORT` | no | Server port (default `8000`). |
 
 ---
@@ -97,7 +99,7 @@ Requires **Node 22+**.
 **Backend** (repo root, TypeScript via `tsx`):
 - [`server.ts`](server.ts) — Express API + WebSocket (`/ws`); routes the Dial event stream into live session updates.
 - [`assignment.ts`](assignment.ts) — the editable scenario, the built-in `SCENARIO_TEMPLATES`, the fixed `MISSION_RULES` engine, and the prompt builders that compose each call's system prompt.
-- [`assessor.ts`](assessor.ts) — Claude grading (mode-aware: per-objective checklist + outcome tier for missions; understood/gaps/score for quizzes).
+- [`assessor.ts`](assessor.ts) — OpenAI-first AI grading with Anthropic fallback (mode-aware: per-objective checklist + outcome tier for missions; understood/gaps/score for quizzes).
 - [`dial-service.ts`](dial-service.ts) — `@getdial/sdk` wrapper (placing calls incl. `voiceGender`) + an in-memory event hub.
 - [`store.ts`](store.ts) — JSON-file session store; [`config.ts`](config.ts) — env loader.
 

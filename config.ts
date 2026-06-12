@@ -5,7 +5,9 @@ export interface Settings {
   apiKey: string;
   baseUrl: string;
   numberId?: string; // explicit default sending number id, optional
-  anthropicApiKey?: string; // Claude key for transcript assessment (Sprint 2)
+  openaiApiKey?: string; // preferred key for transcript assessment
+  anthropicApiKey?: string; // optional fallback key for transcript assessment
+  assessmentModel: string;
 }
 
 export function loadSettings(): Settings {
@@ -17,6 +19,13 @@ export function loadSettings(): Settings {
   }
   const baseUrl = (process.env.DIAL_BASE_URL ?? "https://getdial.ai").trim();
   const numberId = (process.env.DIAL_NUMBER_ID ?? "").trim() || undefined;
+  const openaiApiKey =
+    (process.env.OPENAI_API_KEY ?? "").trim() ||
+    (process.env.CODEX_API_KEY ?? "").trim() ||
+    undefined;
   const anthropicApiKey = (process.env.ANTHROPIC_API_KEY ?? "").trim() || undefined;
-  return { apiKey, baseUrl, numberId, anthropicApiKey };
+  const assessmentModel =
+    (process.env.ASSESS_MODEL ?? "").trim() ||
+    (anthropicApiKey && !openaiApiKey ? "claude-sonnet-4-6" : "gpt-5.5");
+  return { apiKey, baseUrl, numberId, openaiApiKey, anthropicApiKey, assessmentModel };
 }
