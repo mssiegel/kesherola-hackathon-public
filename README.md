@@ -19,7 +19,7 @@ Every scenario runs in one of two **modes**:
 | **Quiz** | A warm character gently checks whether the student understood the material. | Harry Potter chats about the book you read. |
 | **Mission** | A skeptical roleplay the student must *persuade their way through*, with adaptive difficulty and a guaranteed, no-fail ending. | Convince Golda Meir to mobilise before the Yom Kippur War. |
 
-The hard parts of a mission — the **3-tier rescue ladder** (rephrase → forced choice → give-the-answer-and-ask-why), the **no-fail guarantee**, the skeptical pushback, the scripted opening line, and the **tiered outcomes** (strong / medium / supported) — are applied automatically by the engine. Teachers never configure them; they just fill in a few plain-language fields.
+The hard parts of a mission — the **3-tier rescue ladder** (rephrase → forced choice → give-the-answer-and-ask-why), the **no-fail guarantee**, the skeptical pushback, the scripted opening line, and the **tiered outcomes** (strong / medium / supported) — are applied automatically by the engine. Teachers never configure them, they just fill in a few plain-language fields.
 
 ### Built-in templates
 
