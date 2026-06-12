@@ -1,4 +1,4 @@
-// Typed fetch helpers for the Storyline API (proxied to Express in dev).
+// Typed fetch helpers for the Kesherola API (proxied to Express in dev).
 import type { Assignment, EnrollResponse, Session } from "@shared/types";
 
 async function json<T>(r: Response): Promise<T> {
@@ -27,6 +27,19 @@ export function assessSession(callId: string): Promise<Session> {
 
 export function getAssignment(): Promise<Assignment> {
   return fetch("/api/assignment").then((r) => json<{ assignment: Assignment }>(r)).then((d) => d.assignment);
+}
+
+export function getTemplates(): Promise<Assignment[]> {
+  return fetch("/api/templates").then((r) => json<{ templates: Assignment[] }>(r)).then((d) => d.templates);
+}
+
+/** Place a test call using the (unsaved) scenario in the setup form. */
+export function testCall(assignment: Assignment, name: string, phone: string): Promise<EnrollResponse> {
+  return fetch("/api/test-call", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assignment, name, phone }),
+  }).then((r) => r.json());
 }
 
 export function putAssignment(patch: Partial<Assignment>): Promise<Assignment> {

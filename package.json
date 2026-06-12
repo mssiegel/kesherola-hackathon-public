@@ -1,9 +1,9 @@
 {
-  "name": "storyline",
+  "name": "kesherola",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Storyline — students get an AI phone call from a literary character; teachers get Claude-assessed transcripts. Built on the Dial Node SDK.",
+  "description": "Kesherola — students get an AI phone call from a literary character; teachers get Claude-assessed transcripts. Built on the Dial Node SDK.",
   "scripts": {
     "start": "node --import tsx --env-file-if-exists=.env server.ts",
     "server": "node --import tsx --watch --env-file-if-exists=.env server.ts",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
-    "@getdial/sdk": "^0.6.3",
+    "@getdial/sdk": "^0.7.0",
     "express": "^5.2.1",
     "ws": "^8.21.0"
   },

@@ -1,4 +1,4 @@
-# Storyline 📞📚
+# Kesherola 📞📚
 
 Students get a **phone call from a character in their assigned book** (demo: Harry Potter). The AI roleplays the character and has a real conversation that probes whether the student read and understood the material — fun homework that's hard to fake. After the call, **Claude reads the transcript and grades it** against the teacher's learning goals.
 

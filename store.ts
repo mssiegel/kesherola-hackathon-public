@@ -33,13 +33,14 @@ export function loadSessions(): void {
   }
 }
 
-export function createSession(input: { callId: string; name: string; phone: string }): Session {
+export function createSession(input: { callId: string; name: string; phone: string; isTest?: boolean }): Session {
   const now = new Date().toISOString();
   const session: Session = {
     callId: input.callId,
     name: input.name,
     phone: input.phone,
     status: "calling",
+    isTest: input.isTest || undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -61,6 +62,9 @@ export function updateSession(callId: string, patch: Partial<Session>): Session 
   return next;
 }
 
+/** Real student sessions for the teacher dashboard (test dry-runs are hidden). */
 export function listSessions(): Session[] {
-  return [...sessions.values()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  return [...sessions.values()]
+    .filter((s) => !s.isTest)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }

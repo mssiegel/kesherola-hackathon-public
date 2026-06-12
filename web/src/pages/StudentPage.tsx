@@ -17,6 +17,9 @@ export default function StudentPage() {
 
   const character = assignment?.characterName ?? "Your character";
   const book = assignment?.bookTitle ?? "the book";
+  const isMission = assignment?.mode === "mission";
+  const role = assignment?.characterRole;
+  const heroEmoji = isMission ? "📞" : "🦉";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,8 +49,13 @@ export default function StudentPage() {
         <div className="big-emoji">📞✨</div>
         <h1>{character} is calling you now, {name}!</h1>
         <p className="muted">
-          Answer your phone and have a chat about <em>{book}</em>. Speak naturally —
-          {" "}it's a real conversation. When you're done, just say goodbye and hang up.
+          {isMission ? (
+            <>Answer your phone — {character} is on the line. Speak naturally and make your
+            {" "}case; it's a real conversation. When you're done, just say goodbye and hang up.</>
+          ) : (
+            <>Answer your phone and have a chat about <em>{book}</em>. Speak naturally —
+            {" "}it's a real conversation. When you're done, just say goodbye and hang up.</>
+          )}
         </p>
         <button className="btn ghost" onClick={() => { setPhase("form"); setName(""); setPhone(""); }}>
           Enroll someone else
@@ -58,11 +66,20 @@ export default function StudentPage() {
 
   return (
     <div className="card hero">
-      <div className="big-emoji">🦉</div>
+      <div className="big-emoji">{heroEmoji}</div>
       <h1>{character} wants to talk to you</h1>
       <p className="lead">
-        about <strong>{book}</strong>. Pop in your name and phone number, and you'll get a
-        real phone call to chat about what you read.
+        {isMission ? (
+          <>
+            {role ? <>{role} </> : null}{character} needs to reach you urgently. Enter your name
+            and phone number to get a real phone call — then step into the scene and make your case.
+          </>
+        ) : (
+          <>
+            about <strong>{book}</strong>. Pop in your name and phone number, and you'll get a
+            real phone call to chat about what you read.
+          </>
+        )}
       </p>
 
       <form className="form" onSubmit={onSubmit}>

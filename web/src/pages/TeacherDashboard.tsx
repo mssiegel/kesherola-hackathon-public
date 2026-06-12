@@ -92,6 +92,33 @@ function AssessmentCard({ session, onAssess }: { session: Session; onAssess: () 
     );
   }
 
+  // Mission mode: show the no-fail outcome, the objective checklist, and a
+  // suggested follow-up instead of the quiz-style understood/gaps columns.
+  if (a.outcome || a.objectiveResults) {
+    return (
+      <div className="assessment">
+        <div className="score-row">
+          <div className={`outcome outcome-${a.outcome ?? "supported"}`}>{a.suggestedGrade}</div>
+          <div className="score"><span className="score-num">{a.score}</span><span className="score-den">/100</span></div>
+        </div>
+        <p className="summary">{a.summary}</p>
+        {a.objectiveResults && a.objectiveResults.length > 0 && (
+          <ul className="checklist">
+            {a.objectiveResults.map((r, i) => (
+              <li key={i} className={r.met ? "met" : "unmet"}>
+                <span className="check">{r.met ? "✓" : "—"}</span> {r.objective}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="engagement"><strong>Engagement:</strong> {a.engagement}</p>
+        {a.followUpQuestion && (
+          <p className="followup"><strong>Suggested follow-up:</strong> {a.followUpQuestion}</p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="assessment">
       <div className="score-row">

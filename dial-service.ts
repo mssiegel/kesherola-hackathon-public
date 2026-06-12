@@ -89,8 +89,14 @@ export class DialService {
     return this.client.sendMessage({ to, fromNumberId: this.resolveFrom(fromNumberId), body, channel: "sms" });
   }
 
-  placeCall(to: string, outboundInstruction: string, language?: string, fromNumberId?: string): Promise<Call> {
-    return this.client.makeCall({ to, fromNumberId: this.resolveFrom(fromNumberId), outboundInstruction, language });
+  placeCall(
+    to: string,
+    outboundInstruction: string,
+    language?: string,
+    voiceGender?: "male" | "female",
+    fromNumberId?: string,
+  ): Promise<Call> {
+    return this.client.makeCall({ to, fromNumberId: this.resolveFrom(fromNumberId), outboundInstruction, language, voiceGender });
   }
 
   getCall(id: string): Promise<Call> {
