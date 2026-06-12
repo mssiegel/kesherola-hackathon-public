@@ -9,7 +9,10 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <NavLink to="/" className="brand">
-          <span className="brand-mark">📞</span> Kesherola
+          <span className="brand-mark" aria-hidden>
+            <img src="/brand/kesherola-logo.png" alt="" />
+          </span>
+          <span>Kesherola</span>
         </NavLink>
         <nav className="nav">
           <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>

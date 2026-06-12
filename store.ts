@@ -53,6 +53,11 @@ export function getSession(callId: string): Session | undefined {
   return sessions.get(callId);
 }
 
+/** Internal view including hidden test sessions, for lifecycle repair jobs. */
+export function listAllSessions(): Session[] {
+  return [...sessions.values()];
+}
+
 export function updateSession(callId: string, patch: Partial<Session>): Session | undefined {
   const cur = sessions.get(callId);
   if (!cur) return undefined;

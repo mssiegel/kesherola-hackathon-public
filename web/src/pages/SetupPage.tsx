@@ -59,7 +59,6 @@ export default function SetupPage() {
   const [testPhone, setTestPhone] = useState("");
   const [test, setTest] = useState<TestState>("idle");
   const [testError, setTestError] = useState("");
-  const [tested, setTested] = useState(false);
 
   useEffect(() => {
     getTemplates().then(setTemplates).catch(() => { /* templates are optional */ });
@@ -126,7 +125,7 @@ export default function SetupPage() {
     }
     try {
       const res = await testCall(currentPayload(), testName.trim(), phone);
-      if (res.ok) { setTest("ringing"); setTested(true); }
+      if (res.ok) { setTest("ringing"); }
       else { setTestError(res.detail || "Could not place the test call."); setTest("error"); }
     } catch (e) {
       setTestError((e as Error).message); setTest("error");
@@ -285,22 +284,6 @@ export default function SetupPage() {
         </div>
         {test === "ringing" && <p className="saved-note">Calling {testName.trim()} now — pick up your phone ☎️</p>}
         {test === "error" && <div className="error sm">{testError}</div>}
-
-        {(tested || (a.notes ?? "").length > 0) && (
-          <div className="refine">
-            <label>What would you change?
-              <textarea
-                rows={3}
-                value={a.notes ?? ""}
-                onChange={(e) => set("notes", e.target.value)}
-                placeholder="After the call, note what felt off — e.g. “open friendlier, push back harder when the student is vague, keep it under 4 minutes.” Saved with the scenario."
-              />
-            </label>
-            <button type="button" className="btn ghost sm" disabled title="Coming in a future version">
-              Refine with AI ✨ (coming soon)
-            </button>
-          </div>
-        )}
       </div>
 
       {error && <div className="error">{error}</div>}

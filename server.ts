@@ -18,7 +18,7 @@ import { dirname, join } from "node:path";
 import { loadSettings } from "./config.ts";
 import { DialService } from "./dial-service.ts";
 import { getAssignment, saveAssignment, buildOutboundInstruction, SCENARIO_TEMPLATES } from "./assignment.ts";
-import { createSession, getSession, updateSession, listSessions, loadSessions } from "./store.ts";
+import { createSession, getSession, updateSession, listSessions, listAllSessions, loadSessions } from "./store.ts";
 import { assessTranscript, assessmentEnabled, assessmentProvider } from "./assessor.ts";
 import type { Assignment, ScenarioMode, Session, SessionStatus } from "./shared/types.ts";
 
@@ -68,6 +68,53 @@ function publishSession(session: Session): void {
   service.hub.publish({ type: "session.updated", data: session });
 }
 
+function sessionPatchFromTerminatedCall(call: Awaited<ReturnType<DialService["getCall"]>>): Partial<Session> | null {
+  const terminationType = call.terminationType ?? call.status?.terminationType;
+  const terminated = call.status?.state === "Terminated" || !!terminationType || !!call.terminatedAt;
+  if (!terminated) return null;
+
+  const status = statusFromEnded(String(terminationType ?? "completed"), Boolean(call.status?.cancelRequested));
+  return {
+    status,
+    outcome: terminationType ?? undefined,
+    durationSeconds: Number.isFinite(call.duration) ? call.duration : undefined,
+  };
+}
+
+async function captureTranscript(callId: string, transcript: string): Promise<Session | undefined> {
+  const stored = updateSession(callId, { status: "transcribed", transcript });
+  if (stored) publishSession(stored);
+  await runAssessment(callId, transcript);
+  return getSession(callId);
+}
+
+async function reconcileCallingSession(callId: string): Promise<Session | undefined> {
+  const session = getSession(callId);
+  if (!session || session.status !== "calling") return session;
+
+  try {
+    const call = await service.getCall(callId);
+    const patch = sessionPatchFromTerminatedCall(call);
+    if (!patch) return getSession(callId);
+
+    const updated = updateSession(callId, patch);
+    if (updated) publishSession(updated);
+
+    if (call.transcript?.trim()) {
+      return await captureTranscript(callId, call.transcript);
+    }
+    return getSession(callId);
+  } catch (e) {
+    console.error(`[kesherola] failed to reconcile call ${callId}:`, (e as Error).message);
+    return getSession(callId);
+  }
+}
+
+async function reconcileCallingSessions(): Promise<void> {
+  const calling = listAllSessions().filter((s) => s.status === "calling");
+  await Promise.all(calling.map((s) => reconcileCallingSession(s.callId)));
+}
+
 async function handleEvent(raw: unknown): Promise<void> {
   const ev = raw as HubEvent;
   const data = ev?.data ?? {};
@@ -90,9 +137,7 @@ async function handleEvent(raw: unknown): Promise<void> {
     try {
       const call = await service.getCall(callId);
       const transcript = call.transcript ?? "";
-      const stored = updateSession(callId, { status: "transcribed", transcript });
-      if (stored) publishSession(stored);
-      await runAssessment(callId, transcript);
+      await captureTranscript(callId, transcript);
     } catch (e) {
       console.error(`[kesherola] failed to fetch transcript for ${callId}:`, (e as Error).message);
     }
@@ -122,6 +167,7 @@ async function runAssessment(callId: string, transcript: string): Promise<void> 
 }
 
 service.hub.subscribe((ev) => void handleEvent(ev));
+void reconcileCallingSessions();
 
 // ---- HTTP app --------------------------------------------------------------
 
@@ -248,12 +294,13 @@ app.post("/api/enroll", async (req: Request, res: Response) => {
 });
 
 // --- teacher views ---
-app.get("/api/sessions", (_req: Request, res: Response) => {
+app.get("/api/sessions", async (_req: Request, res: Response) => {
+  await reconcileCallingSessions();
   res.json({ sessions: listSessions() });
 });
 
-app.get("/api/sessions/:callId", (req: Request, res: Response) => {
-  const session = getSession(String(req.params.callId));
+app.get("/api/sessions/:callId", async (req: Request, res: Response) => {
+  const session = await reconcileCallingSession(String(req.params.callId));
   if (!session) { res.status(404).json({ detail: "Session not found" }); return; }
   res.json({ session });
 });
@@ -287,7 +334,11 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws" });
 wss.on("connection", (ws: WebSocket) => {
   // seed a fresh dashboard with current sessions
-  ws.send(JSON.stringify({ kind: "snapshot", sessions: listSessions() }));
+  void reconcileCallingSessions().then(() => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({ kind: "snapshot", sessions: listSessions() }));
+    }
+  });
   const unsubscribe = service.hub.subscribe((ev) => {
     const e = ev as HubEvent;
     if (e?.type === "session.updated" && ws.readyState === ws.OPEN) {
