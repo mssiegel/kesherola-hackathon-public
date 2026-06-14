@@ -17,6 +17,12 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 type Direction = "inbound" | "outbound";
 type Listener = (event: unknown) => void;
 
+function normalizeLanguage(language?: string): string | undefined {
+  const code = language?.trim();
+  if (!code) return undefined;
+  return code;
+}
+
 // In-memory pub/sub with a small replay buffer for late subscribers.
 export class EventHub {
   private subscribers = new Set<Listener>();
@@ -96,7 +102,13 @@ export class DialService {
     voiceGender?: "male" | "female",
     fromNumberId?: string,
   ): Promise<Call> {
-    return this.client.makeCall({ to, fromNumberId: this.resolveFrom(fromNumberId), outboundInstruction, language, voiceGender });
+    return this.client.makeCall({
+      to,
+      fromNumberId: this.resolveFrom(fromNumberId),
+      outboundInstruction,
+      language: normalizeLanguage(language),
+      voiceGender,
+    });
   }
 
   getCall(id: string): Promise<Call> {

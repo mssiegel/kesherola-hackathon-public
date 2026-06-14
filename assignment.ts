@@ -47,6 +47,37 @@ const HARRY_POTTER_QUIZ: Assignment = {
   language: "en-US",
 };
 
+/** Quiz template: a Hebrew tutor who maximizes learner speaking time. */
+const HEBREW_TUTOR_QUIZ: Assignment = {
+  mode: "quiz",
+  title: "Daily Hebrew Conversation Tutor",
+  tagline: "Practice Hebrew speaking with gentle correction",
+  characterName: "מורה לעברית",
+  persona:
+    "You are a warm, patient Hebrew tutor. You sound encouraging, clear, and natural, " +
+    "like a real teacher who wants the learner to feel brave enough to speak. You gently " +
+    "correct grammar and word choice without interrupting the learner's confidence.",
+  context:
+    "This is daily spoken Hebrew practice. Your job is to get the learner talking as much " +
+    "as possible at their current level. Use everyday topics such as family, school, work, " +
+    "food, plans, hobbies, places, and simple opinions. Adapt quickly: if the learner gives " +
+    "short answers, ask easier questions and offer sentence starters; if they speak well, " +
+    "ask for details, reasons, and follow-up stories. Correct one or two useful mistakes at " +
+    "a time, say the corrected Hebrew sentence naturally, and ask the learner to repeat it " +
+    "or use it in a new sentence. Keep the tone positive and keep the learner speaking.",
+  languageLevel:
+    "Beginner/intermediate Hebrew — simple everyday vocabulary, short sentences, and lots of learner talk.",
+  learningGoals: [
+    "Speaks in Hebrew for most of the call rather than relying on English",
+    "Answers in complete Hebrew phrases or sentences according to their level",
+    "Repeats corrected Hebrew sentences and tries to use the correction again",
+    "Understands simple Hebrew questions and asks for clarification when needed",
+    "Builds confidence by giving longer answers, examples, or reasons over the call",
+  ],
+  voiceGender: "female",
+  language: "he-IL",
+};
+
 /** Mission template: a skeptical roleplay the student must persuade through. */
 const GOLDA_MEIR_MISSION: Assignment = {
   mode: "mission",
@@ -88,8 +119,13 @@ const GOLDA_MEIR_MISSION: Assignment = {
     "Addresses the US political pressure not to strike first, and why acting is still worth it",
     "Shows empathy for the weight of the decision Golda is being asked to make",
   ],
-  outcomeLabels: { strong: "Full mobilisation", medium: "Partial mobilisation", supported: "Acts after urgent review" },
-  languageLevel: "Middle/high-school English — plain, direct words; short sentences.",
+  outcomeLabels: {
+    strong: "Full mobilisation",
+    medium: "Partial mobilisation",
+    supported: "Acts after urgent review",
+  },
+  languageLevel:
+    "Middle/high-school English — plain, direct words; short sentences.",
   voiceGender: "female",
   language: "en-US",
 };
@@ -129,8 +165,13 @@ const GREAT_GATSBY_MISSION: Assignment = {
     "Explains what the green light symbolizes for Gatsby",
     "Gives a personal moral verdict on who is responsible, with reasons",
   ],
-  outcomeLabels: { strong: "Case Solved", medium: "Partial Lead", supported: "Kept on File" },
-  languageLevel: "High-school English — can handle literary words, but keep sentences clear.",
+  outcomeLabels: {
+    strong: "Case Solved",
+    medium: "Partial Lead",
+    supported: "Kept on File",
+  },
+  languageLevel:
+    "High-school English — can handle literary words, but keep sentences clear.",
   voiceGender: "female",
   language: "en-US",
 };
@@ -167,8 +208,13 @@ const AGENT_GUY_MISSION: Assignment = {
     "Describes their project in three or more sentences with concrete detail",
     "Recovers gracefully when stuck, using rescue phrases naturally ('Could you repeat that?', 'Let me think')",
   ],
-  outcomeLabels: { strong: "Recruited", medium: "Second interview", supported: "Promising — needs training" },
-  languageLevel: "Spoken-English oral-exam level — push gently for full sentences and detail.",
+  outcomeLabels: {
+    strong: "Recruited",
+    medium: "Second interview",
+    supported: "Promising — needs training",
+  },
+  languageLevel:
+    "Spoken-English oral-exam level — push gently for full sentences and detail.",
   voiceGender: "male",
   language: "en-US",
 };
@@ -214,10 +260,15 @@ const ROSALIND_FRANKLIN_MISSION: Assignment = {
     "Describes DNA's double helix — base pairing inside, sugar-phosphate backbone outside",
     "Acknowledges Franklin's contribution and the ethics of her data being used without credit",
   ],
-  outcomeLabels: { strong: "Trust earned", medium: "Cautiously convinced", supported: "Agrees to recheck the data" },
-  languageLevel: "Precise, scientific, understated British register — clear, measured sentences.",
+  outcomeLabels: {
+    strong: "Trust earned",
+    medium: "Cautiously convinced",
+    supported: "Agrees to recheck the data",
+  },
+  languageLevel:
+    "Precise, scientific, understated British register — clear, measured sentences.",
   voiceGender: "female",
-  language: "en-GB",
+  language: "en-US",
 };
 
 /** Built-in starting points the teacher can load from /setup. Add a use case
@@ -227,6 +278,7 @@ export const SCENARIO_TEMPLATES: Assignment[] = [
   GOLDA_MEIR_MISSION,
   AGENT_GUY_MISSION,
   ROSALIND_FRANKLIN_MISSION,
+  HEBREW_TUTOR_QUIZ,
   HARRY_POTTER_QUIZ,
 ];
 
@@ -234,6 +286,11 @@ export const SCENARIO_TEMPLATES: Assignment[] = [
 export const DEFAULT_ASSIGNMENT: Assignment = GOLDA_MEIR_MISSION;
 
 let cache: Assignment | null = null;
+
+export function callLanguageFor(a: Pick<Assignment, "language">): "he-IL" | "en-US" {
+  const code = a.language?.trim().toLowerCase();
+  return code === "he-il" || code === "he" ? "he-IL" : "en-US";
+}
 
 function ensureDir(): void {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
@@ -245,7 +302,10 @@ export function getAssignment(): Assignment {
   ensureDir();
   if (existsSync(FILE)) {
     try {
-      const loaded: Assignment = { ...DEFAULT_ASSIGNMENT, ...JSON.parse(readFileSync(FILE, "utf8")) };
+      const loaded: Assignment = {
+        ...DEFAULT_ASSIGNMENT,
+        ...JSON.parse(readFileSync(FILE, "utf8")),
+      };
       cache = loaded;
       return loaded;
     } catch {
@@ -261,6 +321,7 @@ export function getAssignment(): Assignment {
 /** Merge a partial update from the setup page and persist it. */
 export function saveAssignment(partial: Partial<Assignment>): Assignment {
   const next: Assignment = { ...getAssignment(), ...partial };
+  next.language = callLanguageFor(next);
   ensureDir();
   writeFileSync(FILE, JSON.stringify(next, null, 2));
   cache = next;
@@ -268,37 +329,68 @@ export function saveAssignment(partial: Partial<Assignment>): Assignment {
 }
 
 /** Compose the call's system prompt from the (editable) scenario + student. */
-export function buildOutboundInstruction(a: Assignment, studentName: string): string {
+export function buildOutboundInstruction(
+  a: Assignment,
+  studentName: string,
+): string {
   return a.mode === "mission"
     ? buildMissionInstruction(a, studentName)
     : buildQuizInstruction(a, studentName);
 }
 
-/** Quiz mode: a warm character gently checks understanding (unchanged). */
+/** Quiz mode: a warm character checks understanding or runs a tutoring chat. */
 function buildQuizInstruction(a: Assignment, studentName: string): string {
   const goals = a.learningGoals.map((g) => `- ${g}`).join("\n");
-  const source = a.bookTitle ? `"${a.bookTitle}"` : "the material";
-  return [
-    `You are ${a.characterName}, a character from ${source}. You are making a friendly phone call to ${studentName}, a student who was assigned to read the book.`,
+  const isBookQuiz = Boolean(a.bookTitle?.trim());
+  const isHebrew = callLanguageFor(a) === "he-IL";
+  const source = a.bookTitle ? `"${a.bookTitle}"` : "the learning activity";
+  const lines = [
+    isBookQuiz
+      ? `You are ${a.characterName}, a character from ${source}. You are making a friendly phone call to ${studentName}, a student who was assigned to read the book.`
+      : `You are ${a.characterName}. You are making a friendly learning phone call to ${studentName}.`,
     ``,
     `# Your persona`,
     a.persona,
     ``,
-    `# What you know (book context)`,
+    isBookQuiz ? `# What you know (book context)` : `# Teaching context`,
     a.context,
     ``,
     `# The point of this call`,
-    `Have a natural conversation with ${studentName} to find out, gently, whether they read and understood the book. Over the call, try to gauge how well they meet these learning goals:`,
+    isBookQuiz
+      ? `Have a natural conversation with ${studentName} to find out, gently, whether they read and understood the book. Over the call, try to gauge how well they meet these learning goals:`
+      : `Have a natural learning conversation with ${studentName}. Your main job is to help them practice out loud while you gauge how well they meet these learning goals:`,
     goals,
+  ];
+  if (a.languageLevel) {
+    lines.push(
+      ``,
+      `# Language level`,
+      a.languageLevel,
+    );
+  }
+  if (isHebrew) {
+    lines.push(
+      ``,
+      `# Hebrew-only policy`,
+      `- Speak Hebrew by default for the entire call.`,
+      `- Use English only if ${studentName} explicitly asks for an English explanation or translation.`,
+      `- If you briefly use English, return to Hebrew immediately and have ${studentName} answer in Hebrew.`,
+    );
+  }
+  lines.push(
     ``,
     `# How to behave`,
     `- Stay fully in character as ${a.characterName}. Never say you are an AI, a model, or an assistant, and never break character.`,
     `- Wait for ${studentName} to speak first — they'll say "hello?" when they pick up. Don't talk into silence. Once you hear them, greet ${studentName} by name and introduce yourself as ${a.characterName}.`,
+    `- Keep your own turns short so ${studentName} does most of the talking.`,
     `- Ask open-ended questions and adapt your follow-ups to what they say. Make it feel like a real chat, not a quiz.`,
+    `- Prefer prompts that make ${studentName} answer in full phrases or sentences. If they answer with one word, warmly ask for a longer version.`,
+    `- When ${studentName} makes a useful grammar or word-choice mistake, correct it gently: say the corrected sentence naturally, then ask them to repeat it or use it in a new sentence.`,
     `- If they seem stuck or unsure, encourage them and offer a gentle hint — do not lecture or hand them the answer.`,
     `- Keep it conversational and to about five minutes.`,
     `- When you've touched on a few of the goals, thank ${studentName} warmly and say goodbye to end the call.`,
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
 
 /**
@@ -366,7 +458,8 @@ function buildMissionInstruction(a: Assignment, studentName: string): string {
     a.context,
     ``,
     `# The student's mission`,
-    a.studentMission ?? "Persuade you to take their concern seriously and act on it.",
+    a.studentMission ??
+      "Persuade you to take their concern seriously and act on it.",
   ];
   if (a.openingLine) {
     lines.push(
@@ -381,7 +474,11 @@ function buildMissionInstruction(a: Assignment, studentName: string): string {
     objectives,
   );
   if (a.languageLevel) {
-    lines.push(``, `# Language level (keep your words at this level)`, a.languageLevel);
+    lines.push(
+      ``,
+      `# Language level (keep your words at this level)`,
+      a.languageLevel,
+    );
   }
   lines.push(``, missionRules(studentName, a.characterName));
   return lines.join("\n");

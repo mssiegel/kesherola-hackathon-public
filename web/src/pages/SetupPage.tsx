@@ -22,24 +22,19 @@ const EMPTY_ASSIGNMENT: Assignment = {
   language: "",
 };
 
-// Preset choices for the two language dropdowns. The level strings double as the
-// prompt instruction the agent receives, so they read as guidance.
+// Preset choices for the language-level dropdown. The level strings double as
+// the prompt instruction the agent receives, so they read as guidance.
 const LANGUAGE_LEVELS = [
   "Elementary school — very simple words, very short sentences",
   "Middle school — plain words, short sentences",
   "High school — can handle richer vocabulary, clear sentences",
   "Advanced — natural, adult language",
 ];
-// Language (BCP-47) picker is hidden for now — kept here to re-enable later.
-// const LANGUAGES: { value: string; label: string }[] = [
-//   { value: "", label: "Auto-detect" },
-//   { value: "en-US", label: "English (US)" },
-//   { value: "en-GB", label: "English (UK)" },
-//   { value: "he-IL", label: "Hebrew" },
-//   { value: "ar", label: "Arabic" },
-//   { value: "es-ES", label: "Spanish" },
-//   { value: "fr-FR", label: "French" },
-// ];
+
+function callLanguageFor(a: Assignment): string {
+  const code = a.language?.trim().toLowerCase();
+  return code === "he-il" || code === "he" ? "he-IL" : "en-US";
+}
 
 // Deterministic gradient avatar from the template title, so each card has its
 // own stable colour without hand-assigning one.
@@ -100,7 +95,7 @@ export default function SetupPage() {
       outcomeLabels: a.outcomeLabels, // travels with the template; preserved on save
       notes: a.notes ?? "",
       voiceGender: a.voiceGender,
-      language: a.language ?? "",
+      language: callLanguageFor(a),
     };
   }
 
@@ -218,8 +213,8 @@ export default function SetupPage() {
         </label>
       </div>
 
-      <label>{isMission ? "Setting — the situation and what the character knows" : "Book context — facts the character can use to probe the student"}
-        <textarea rows={6} value={a.context} onChange={(e) => set("context", e.target.value)} placeholder={isMission ? "Lay out the situation and the key facts the character knows — enough for them to react, push back, and guide the student." : "List the key facts from the text the character can use to check the student really understood it."} />
+      <label>{isMission ? "Setting — the situation and what the character knows" : "Context — facts or teaching guidance the caller should use"}
+        <textarea rows={6} value={a.context} onChange={(e) => set("context", e.target.value)} placeholder={isMission ? "Lay out the situation and the key facts the character knows — enough for them to react, push back, and guide the student." : "List the key facts, topics, or tutoring guidance the caller should use during the conversation."} />
       </label>
 
       {isMission && (
@@ -249,28 +244,15 @@ export default function SetupPage() {
         ))}
       </div>
 
-      {isMission && (
-        <label>Language level — how simple the character's words should be
-          <select value={a.languageLevel ?? ""} onChange={(e) => set("languageLevel", e.target.value || undefined)}>
-            <option value="">Choose a level…</option>
-            {a.languageLevel && !LANGUAGE_LEVELS.includes(a.languageLevel) && (
-              <option value={a.languageLevel}>{a.languageLevel}</option>
-            )}
-            {LANGUAGE_LEVELS.map((lvl) => <option key={lvl} value={lvl}>{lvl}</option>)}
-          </select>
-        </label>
-      )}
-
-      {/* Language (BCP-47) picker hidden for now — re-enable when needed.
-      <label className="lang">Language
-        <select value={a.language ?? ""} onChange={(e) => set("language", e.target.value || undefined)}>
-          {a.language && !LANGUAGES.some((l) => l.value === a.language) && (
-            <option value={a.language}>{a.language}</option>
+      <label>Language level — how simple the caller's words should be
+        <select value={a.languageLevel ?? ""} onChange={(e) => set("languageLevel", e.target.value || undefined)}>
+          <option value="">Choose a level…</option>
+          {a.languageLevel && !LANGUAGE_LEVELS.includes(a.languageLevel) && (
+            <option value={a.languageLevel}>{a.languageLevel}</option>
           )}
-          {LANGUAGES.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
+          {LANGUAGE_LEVELS.map((lvl) => <option key={lvl} value={lvl}>{lvl}</option>)}
         </select>
       </label>
-      */}
 
       <div className="test-box">
         <h3>Test it before saving</h3>

@@ -133,19 +133,26 @@ export async function assessTranscript(
 
 function quizPrompt(assignment: Assignment, studentName: string, transcript: string): { system: string; userContent: string } {
   const goals = assignment.learningGoals.map((g, i) => `${i + 1}. ${g}`).join("\n");
-  const source = assignment.bookTitle ? `"${assignment.bookTitle}"` : "the assigned material";
+  const source = assignment.bookTitle ? `"${assignment.bookTitle}"` : "the learning activity";
+  const isBookQuiz = Boolean(assignment.bookTitle?.trim());
 
-  const system =
-    `You are a fair, experienced literature teacher's grading assistant. A student named ${studentName} ` +
-    `had a phone conversation with an AI roleplaying ${assignment.characterName} from ${source}. ` +
-    `Assess ONLY what the transcript shows about the student's understanding of the book, graded against the ` +
-    `learning goals. Be encouraging but honest: a short, distracted, or off-topic conversation should score lower, ` +
-    `and credit specific textual details over vague or movie-only answers. Speech-to-text may be imperfect; judge ` +
-    `intent generously, not spelling.`;
+  const system = isBookQuiz
+    ? `You are a fair, experienced literature teacher's grading assistant. A student named ${studentName} ` +
+      `had a phone conversation with an AI roleplaying ${assignment.characterName} from ${source}. ` +
+      `Assess ONLY what the transcript shows about the student's understanding of the book, graded against the ` +
+      `learning goals. Be encouraging but honest: a short, distracted, or off-topic conversation should score lower, ` +
+      `and credit specific textual details over vague or movie-only answers. Speech-to-text may be imperfect; judge ` +
+      `intent generously, not spelling.`
+    : `You are a fair, encouraging teacher's grading assistant. A student named ${studentName} ` +
+      `had a phone conversation with ${assignment.characterName} for ${source}. Assess ONLY what the transcript ` +
+      `shows against the learning goals. Be encouraging but honest: a very short, distracted, or off-topic ` +
+      `conversation should score lower, while genuine effort, learner speaking time, appropriate use of the target ` +
+      `language, and successful self-correction should receive credit. Speech-to-text may be imperfect; judge intent ` +
+      `generously, not spelling or transcript punctuation.`;
 
   const userContent =
     `Learning goals:\n${goals}\n\n` +
-    `Book context (ground truth you can check answers against):\n${assignment.context}\n\n` +
+    `${isBookQuiz ? "Book context (ground truth you can check answers against)" : "Teaching context"}:\n${assignment.context}\n\n` +
     `Transcript (User = the student ${studentName}; Agent = ${assignment.characterName}):\n${transcript}`;
 
   return { system, userContent };

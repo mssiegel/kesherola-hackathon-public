@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { loadSettings } from "./config.ts";
 import { DialService } from "./dial-service.ts";
-import { getAssignment, saveAssignment, buildOutboundInstruction, SCENARIO_TEMPLATES } from "./assignment.ts";
+import { getAssignment, saveAssignment, buildOutboundInstruction, callLanguageFor, SCENARIO_TEMPLATES } from "./assignment.ts";
 import { createSession, getSession, updateSession, listSessions, listAllSessions, loadSessions } from "./store.ts";
 import { assessTranscript, assessmentEnabled, assessmentProvider } from "./assessor.ts";
 import type { Assignment, ScenarioMode, Session, SessionStatus } from "./shared/types.ts";
@@ -267,7 +267,7 @@ app.post("/api/test-call", async (req: Request, res: Response) => {
     const phone = validE164(req.body?.phone);
     const assignment = assignmentFromBody((req.body?.assignment ?? {}) as Record<string, unknown>);
     const instruction = buildOutboundInstruction(assignment, name);
-    const call = await service.placeCall(phone, instruction, assignment.language, assignment.voiceGender);
+    const call = await service.placeCall(phone, instruction, callLanguageFor(assignment), assignment.voiceGender);
     // Capture the dry-run transcript (hidden from the dashboard) so a future
     // "refine with AI" step can pair it with the teacher's notes. No grading.
     createSession({ callId: call.id, name, phone, isTest: true });
@@ -284,7 +284,7 @@ app.post("/api/enroll", async (req: Request, res: Response) => {
     const phone = validE164(req.body?.phone);
     const assignment = getAssignment();
     const instruction = buildOutboundInstruction(assignment, name);
-    const call = await service.placeCall(phone, instruction, assignment.language, assignment.voiceGender);
+    const call = await service.placeCall(phone, instruction, callLanguageFor(assignment), assignment.voiceGender);
     const session = createSession({ callId: call.id, name, phone });
     publishSession(session);
     res.json({ ok: true, callId: call.id });

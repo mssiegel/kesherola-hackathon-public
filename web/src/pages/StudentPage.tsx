@@ -18,8 +18,9 @@ export default function StudentPage() {
   const character = assignment?.characterName ?? "Your character";
   const book = assignment?.bookTitle ?? "the book";
   const isMission = assignment?.mode === "mission";
+  const isBookQuiz = !isMission && Boolean(assignment?.bookTitle?.trim());
   const role = assignment?.characterRole;
-  const heroEmoji = isMission ? "📞" : "🦉";
+  const heroEmoji = isMission ? "📞" : isBookQuiz ? "🦉" : "🗣️";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +54,7 @@ export default function StudentPage() {
             <>Answer your phone — {character} is on the line. Speak naturally and make your
             {" "}case; it's a real conversation. When you're done, just say goodbye and hang up.</>
           ) : (
-            <>Answer your phone and have a chat about <em>{book}</em>. Speak naturally —
+            <>Answer your phone and {isBookQuiz ? <>have a chat about <em>{book}</em></> : <>have a real learning conversation</>}. Speak naturally —
             {" "}it's a real conversation. When you're done, just say goodbye and hang up.</>
           )}
         </p>
@@ -76,8 +77,9 @@ export default function StudentPage() {
           </>
         ) : (
           <>
-            about <strong>{book}</strong>. Pop in your name and phone number, and you'll get a
-            real phone call to chat about what you read.
+            {isBookQuiz ? <>about <strong>{book}</strong></> : <>for a speaking practice call</>}.
+            {" "}Pop in your name and phone number, and you'll get a real phone call
+            {isBookQuiz ? <> to chat about what you read.</> : <> to practice out loud.</>}
           </>
         )}
       </p>
